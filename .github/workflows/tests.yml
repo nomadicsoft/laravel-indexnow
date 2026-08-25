@@ -1,0 +1,64 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '8.2'
+            laravel: '^12.0'
+            testbench: '^10.0'
+            phpunit: '^11.5'
+          - php: '8.3'
+            laravel: '^13.0'
+            testbench: '^11.0'
+            phpunit: '^12.5'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+          coverage: none
+
+      - name: Select framework pair
+        run: >-
+          composer require --dev --no-update
+          "laravel/framework:${{ matrix.laravel }}"
+          "orchestra/testbench:${{ matrix.testbench }}"
+          "phpunit/phpunit:${{ matrix.phpunit }}"
+
+      - name: Install dependencies
+        run: composer update --no-interaction --prefer-dist
+
+      - name: Validate package
+        run: composer validate --strict
+
+      - name: Run tests
+        run: composer test
+
+      - name: Run static analysis
+        run: composer analyse
+
+      - name: Check formatting
+        run: composer format:check
+
+      - name: Audit dependencies
+        run: composer audit
