@@ -30,7 +30,6 @@ final class IndexNowClient
             ->acceptJson()
             ->asJson()
             ->withHeaders([
-                'Content-Type' => 'application/json; charset=utf-8',
                 'User-Agent' => (string) $this->config->get('indexnow.http.user_agent'),
             ])
             ->connectTimeout(max(1, (int) $this->config->get('indexnow.http.connect_timeout', 5)))
